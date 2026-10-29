@@ -70,3 +70,93 @@ def test_uses_decimal_not_float_for_amounts(policy: Policy) -> None:
     )
 
     assert decision.allowed is True
+
+
+def test_allows_amount_exactly_equal_to_max_transaction(policy: Policy) -> None:
+    decision = check_transaction(TransactionRequest("50", "0xABC", "0"), policy)
+
+    assert decision.allowed is True
+    assert decision.reason_code is DecisionReason.ALLOWED
+
+
+def test_allows_when_daily_spent_plus_amount_equals_daily_limit(policy: Policy) -> None:
+    decision = check_transaction(TransactionRequest("30", "0xABC", "170"), policy)
+
+    assert decision.allowed is True
+    assert decision.reason_code is DecisionReason.ALLOWED
+
+
+def test_empty_allowlist_denies_every_recipient() -> None:
+    empty_policy = Policy(
+        max_transaction="50",
+        daily_limit="200",
+        allowed_recipients=[],
+    )
+    decision = check_transaction(TransactionRequest("10", "0xABC", "0"), empty_policy)
+
+    assert decision.allowed is False
+    assert decision.reason_code is DecisionReason.RECIPIENT_NOT_ALLOWED
+
+
+@pytest.mark.parametrize("recipient", ["", "   ", "\t"])
+def test_rejects_empty_recipient_identifiers(recipient: str) -> None:
+    with pytest.raises(ValueError, match="recipient identifiers must not be empty"):
+        TransactionRequest("10", recipient, "0")
+
+
+@pytest.mark.parametrize(
+    ("max_transaction", "daily_limit"),
+    [("-1", "200"), ("50", "-1"), ("-5", "-10")],
+)
+def test_rejects_negative_limits(max_transaction: str, daily_limit: str) -> None:
+    with pytest.raises(ValueError, match="Policy limits must be non-negative"):
+        Policy(max_transaction, daily_limit, ["0xABC"])
+
+
+@pytest.mark.parametrize(
+    ("value", "field"),
+    [
+        ("not-a-number", "max_transaction"),
+        ("", "daily_limit"),
+        ("12.34.56", "amount"),
+        ("abc", "daily_spent"),
+    ],
+)
+def test_rejects_invalid_decimal_values(value: str, field: str) -> None:
+    if field in ("max_transaction", "daily_limit"):
+        kwargs = {
+            "max_transaction": value if field == "max_transaction" else "50",
+            "daily_limit": value if field == "daily_limit" else "200",
+            "allowed_recipients": ["0xABC"],
+        }
+        with pytest.raises(ValueError, match="must be a valid decimal value"):
+            Policy(**kwargs)
+    else:
+        amount = value if field == "amount" else "10"
+        daily_spent = value if field == "daily_spent" else "0"
+        with pytest.raises(ValueError, match="must be a valid decimal value"):
+            TransactionRequest(amount, "0xABC", daily_spent)
+
+
+def test_rule_order_prefers_amount_over_daily_and_recipient(policy: Policy) -> None:
+    """Documented order: max amount, then daily limit, then recipient."""
+    # amount exceeds max AND would exceed daily AND recipient not allowed
+    decision = check_transaction(
+        TransactionRequest("100", "0xNOT_ALLOWED", "150"), policy
+    )
+    assert decision.allowed is False
+    assert decision.reason_code is DecisionReason.AMOUNT_EXCEEDS_MAXIMUM
+
+    # amount ok, daily exceeded, recipient not allowed -> daily first
+    decision = check_transaction(
+        TransactionRequest("40", "0xNOT_ALLOWED", "170"), policy
+    )
+    assert decision.allowed is False
+    assert decision.reason_code is DecisionReason.DAILY_LIMIT_EXCEEDED
+
+    # only recipient fails
+    decision = check_transaction(
+        TransactionRequest("40", "0xNOT_ALLOWED", "100"), policy
+    )
+    assert decision.allowed is False
+    assert decision.reason_code is DecisionReason.RECIPIENT_NOT_ALLOWED
