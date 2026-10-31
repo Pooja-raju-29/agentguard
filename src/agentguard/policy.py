@@ -81,11 +81,11 @@ class Decision:
     reason: str
 
     def to_dict(self) -> dict:
-     return {
-        "allowed": self.allowed,
-        "reason_code": self.reason_code.value,
-        "reason": self.reason,
-    }
+        return {
+            "allowed": self.allowed,
+            "reason_code": self.reason_code.value,
+            "reason": self.reason,
+        }
 
 def check_transaction(request: TransactionRequest, policy: Policy) -> Decision:
     """Evaluate a proposed transaction against a policy.

@@ -164,6 +164,8 @@ def test_rule_order_prefers_amount_over_daily_and_recipient(policy: Policy) -> N
     )
     assert decision.allowed is False
     assert decision.reason_code is DecisionReason.RECIPIENT_NOT_ALLOWED
+
+
 def test_decision_to_dict_allowed():
     decision = Decision(
         allowed=True,
