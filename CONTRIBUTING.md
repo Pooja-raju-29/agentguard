@@ -37,8 +37,12 @@ Build a policy engine that can:
 2. Choose a small, clearly scoped issue, preferably one labelled `good first issue`.
 3. Comment on the issue before starting work so we can coordinate.
 4. Create a branch and keep the pull request focused on that issue.
-5. Run `pytest` locally and add or update tests whenever behaviour changes.
+5. Run `python -m pytest` locally and add or update tests whenever behaviour changes.
 6. Submit a pull request explaining the change and the tests you ran.
+
+If an issue already has an open pull request or another contributor has
+claimed it, choose a different issue instead. The next maintainer-ready
+starter task is available as an [issue draft](docs/starter-task-non-finite-decimals.md).
 
 ## Local setup
 
@@ -46,9 +50,10 @@ AgentGuard requires Python 3.10+. From the repository root:
 
 ```bash
 python -m venv .venv
-# Activate the virtual environment, then:
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# macOS / Linux: source .venv/bin/activate
 python -m pip install -e ".[dev]"
-pytest
+python -m pytest
 ```
 
 ## MVP conventions

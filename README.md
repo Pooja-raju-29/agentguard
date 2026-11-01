@@ -24,11 +24,18 @@ AgentGuard currently has no runtime dependencies. It requires Python 3.10+.
 git clone https://github.com/demiurge105-code/agentguard.git
 cd agentguard
 python -m venv .venv
-# Activate the virtual environment, then:
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# macOS / Linux:
+# source .venv/bin/activate
 python -m pip install -e ".[dev]"
-pytest
+python -m pytest
 python examples/basic_check.py
 ```
+
+Expected result: the test suite passes and the example prints an allowed
+`Decision`. If `pytest` is not found, run it as `python -m pytest` from the
+activated virtual environment.
 
 The policy engine is deliberately a simulator: it makes a decision about a
 proposed transaction but never submits a transaction or accesses a wallet.
@@ -45,13 +52,17 @@ decision = check_transaction(request, policy)
 
 See [the architecture](docs/architecture.md) for the MVP contract and rule order.
 
-## MVP roadmap
+## Project status and next milestones
 
-1. Python policy engine — in progress
-2. Automated tests — in progress
-3. REST API using FastAPI
-4. Demo AI agent
-5. Explore EVM testnet integration after the simulator is reliable
+The simulation-only policy engine, example, tests, and pull-request CI are in
+place. The next deliberately small milestones are:
+
+1. Review and merge the current JSON-serialization contribution.
+2. Add a minimal FastAPI wrapper that delegates to the policy engine.
+3. Add a demo agent only after the API contract is stable.
+
+EVM testnet work is explicitly out of scope until the simulator and its API
+have proven reliable.
 
 ## Tech stack
 
@@ -68,6 +79,15 @@ See [the architecture](docs/architecture.md) for the MVP contract and rule order
 ## Contributing
 
 We welcome beginner and early-career developers interested in Python, backend development, AI agents, Web3, testing, and security. Start with an issue labelled [`good first issue`](https://github.com/demiurge105-code/agentguard/labels/good%20first%20issue).
+
+Before choosing work, check whether an issue already has an active pull
+request or a contributor who has claimed it. For the next small starter task,
+see the maintainer-ready [issue draft](docs/starter-task-non-finite-decimals.md).
+It is intentionally scoped to one focused pull request and includes its
+acceptance criteria and tests.
+
+New here? Read [CONTRIBUTING.md](CONTRIBUTING.md), complete the Quick start
+above, then run `python -m pytest` before changing anything.
 
 Every pull request automatically runs the test suite on supported Python versions.
 
